@@ -33,6 +33,8 @@ type AILogType =
   | "error"
   | "metadata";
 
+type PermissionMode = "plan" | "acceptEdits" | "fullAuto";
+
 interface AISessionConfig {
   name: string;
   agentType: string;
@@ -41,6 +43,8 @@ interface AISessionConfig {
   temperature?: number;
   systemPrompt?: string;
   workingDirectory?: string;
+  /** Autonomy level for CLI mode. */
+  permissionMode?: PermissionMode;
   providerConfig?: Record<string, unknown>;
 }
 
@@ -419,8 +423,27 @@ class ProviderImpl implements AIAgentProvider {
 
 // ── CLI Args Builder ─────────────────────────────────────────────────────
 
-function CLI_ARGS_FN(_config: AISessionConfig, prompt: string): string[] {
-  return ["--message", prompt, "--yes-always"];
+/**
+ * Map the provider-agnostic permission mode to Aider flags.
+ * Aider autonomy is coarse: `--yes-always` (auto-confirm everything) vs the
+ * interactive default. `plan` uses architect/ask mode (`--chat-mode ask`) so
+ * nothing is applied. Unknown/undefined → safe default (acceptEdits, which
+ * lets aider apply edits but not blanket-confirm shell). CLI-version-dependent.
+ */
+export function permissionFlags(mode: PermissionMode | undefined): string[] {
+  switch (mode) {
+    case "plan":
+      return ["--chat-mode", "ask"];
+    case "fullAuto":
+      return ["--yes-always"];
+    case "acceptEdits":
+    default:
+      return [];
+  }
+}
+
+function CLI_ARGS_FN(config: AISessionConfig, prompt: string): string[] {
+  return ["--message", prompt, ...permissionFlags(config.permissionMode)];
 }
 
 // ── Plugin Export ────────────────────────────────────────────────────────
