@@ -6,7 +6,11 @@
  */
 
 import { Elysia } from "elysia";
-import type { HostServices, VibePlugin, ProfileContext } from "@vibecontrols/plugin-sdk";
+import type {
+  HostServices,
+  VibePlugin,
+  ProfileContext,
+} from "@vibecontrols/plugin-sdk";
 import {
   BoundLogger,
   ProviderRegistry,
@@ -33,7 +37,7 @@ type AILogType =
   | "error"
   | "metadata";
 
-type PermissionMode = "plan" | "acceptEdits" | "fullAuto";
+export type PermissionMode = "plan" | "acceptEdits" | "fullAuto";
 
 interface AISessionConfig {
   name: string;
