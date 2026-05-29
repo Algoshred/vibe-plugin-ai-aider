@@ -70,5 +70,11 @@
     "!dist/**/*.map",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Vignesh T.V",
+    "url": "https://github.com/tvvignesh"
+  },
+  "homepage": "https://vibecontrols.com"
 }
