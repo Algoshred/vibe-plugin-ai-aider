@@ -174,15 +174,25 @@ const CLI_BIN = resolveCliBin();
 const DISPLAY = "Aider";
 const API_PREFIX = `/api/ai-${PROVIDER_NAME}`;
 const SUPPORTED_MODES: ProviderMode[] = ["cli"];
-const CLI_INSTALL_COMMAND = [
-  "python3",
-  "-m",
-  "pip",
-  "install",
-  "--user",
-  "aider-chat",
-];
+// pip install args (without the interpreter). The Python executable is
+// resolved dynamically at install time so Windows ("python") works as well as
+// POSIX ("python3").
+const CLI_INSTALL_ARGS = ["-m", "pip", "install", "--user", "aider-chat"];
 const CLI_INSTALL_KIND = "pip" as const;
+
+/**
+ * Resolve the Python interpreter for the pip install spawn. Prefers `python3`
+ * (canonical on POSIX) and falls back to `python` (canonical on Windows).
+ * Returns null when neither is on PATH.
+ */
+function resolvePythonBin(): string | null {
+  if (typeof Bun === "undefined" || typeof Bun.which !== "function")
+    return null;
+  // Pass the live PATH — Bun.which snapshots PATH at process start and would
+  // otherwise miss a python installed/added to PATH mid-run.
+  const opts = { PATH: process.env.PATH };
+  return Bun.which("python3", opts) ?? Bun.which("python", opts);
+}
 
 interface ManagedSession {
   id: string;
@@ -496,7 +506,22 @@ function createPrereqsRoutes() {
           pendingSudo: [],
           errors: [],
         };
-      const proc = Bun.spawnSync(CLI_INSTALL_COMMAND, {
+      const py = resolvePythonBin();
+      if (!py)
+        return {
+          ok: false,
+          installed: [],
+          pendingSudo: [],
+          errors: [
+            {
+              name: CLI_COMMAND,
+              message:
+                "Python not found on PATH. Install Python 3, then run manually: " +
+                `python3 ${CLI_INSTALL_ARGS.join(" ")}`,
+            },
+          ],
+        };
+      const proc = Bun.spawnSync([py, ...CLI_INSTALL_ARGS], {
         timeout: 120_000,
         stdout: "pipe",
         stderr: "pipe",
@@ -517,7 +542,7 @@ function createPrereqsRoutes() {
             name: CLI_COMMAND,
             message:
               proc.stderr.toString().trim() ||
-              `Run manually: ${CLI_INSTALL_COMMAND.join(" ")}`,
+              `Run manually: ${py} ${CLI_INSTALL_ARGS.join(" ")}`,
           },
         ],
       };
