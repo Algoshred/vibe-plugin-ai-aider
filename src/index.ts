@@ -23,18 +23,9 @@ import {
 type ProviderMode = "sdk" | "cli";
 
 type AISessionStatus =
-  | "active"
-  | "idle"
-  | "processing"
-  | "error"
-  | "terminated";
+  "active" | "idle" | "processing" | "error" | "terminated";
 type AILogType =
-  | "input"
-  | "output"
-  | "thinking"
-  | "event"
-  | "error"
-  | "metadata";
+  "input" | "output" | "thinking" | "event" | "error" | "metadata";
 
 export type PermissionMode = "plan" | "acceptEdits" | "fullAuto";
 
